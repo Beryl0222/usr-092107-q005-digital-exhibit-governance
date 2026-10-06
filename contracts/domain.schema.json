@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "数字文化展项立项台领域事件",
+  "description": "立项与变更平台的事件信封与各事件载荷约定。记录一经接收，event_id、occurred_at、version 不得原地改写；更正须以 supersedes_event_id 指向被更正记录，作为后继记录追加。x-classification 标注字段密级（personal 个人 / institutional 机构 / commercial 商业），读模型按调用方角色脱敏。",
   "type": "object",
   "required": [
     "event_id",
@@ -20,10 +21,26 @@
       "type": "string",
       "enum": [
         "THESIS_SUBMITTED",
+        "THESIS_REVISED",
+        "SOURCE_REGISTERED",
         "SOURCE_CLEARED",
+        "ACADEMIC_REVIEW_RECORDED",
+        "PROPOSAL_CREATED",
+        "PROTOTYPE_SUBMITTED",
+        "COMPONENT_REGISTERED",
+        "COMPONENT_DECLARED",
+        "BUDGET_MILESTONE_SET",
+        "ACCESSIBILITY_ASSESSED",
         "SIMILARITY_FLAGGED",
+        "SPECIAL_REVIEW_CLEARED",
+        "REVIEW_REQUESTED",
+        "REVIEW_DECIDED",
+        "CHANGE_REQUESTED",
         "CHANGE_REVIEWED",
-        "VERSION_RELEASED"
+        "VERSION_RELEASED",
+        "VERSION_WITHDRAWN",
+        "INTERACTION_CAPTURED",
+        "INTERACTION_PURPOSE_VIOLATION_DETECTED"
       ]
     },
     "aggregate_type": {
@@ -32,7 +49,10 @@
         "curatorial_thesis",
         "research_asset",
         "experience_proposal",
-        "approval_decision"
+        "approval_decision",
+        "change_request",
+        "reused_component",
+        "interaction_record"
       ]
     },
     "aggregate_id": {
@@ -50,7 +70,783 @@
     "summary": {
       "type": "string",
       "minLength": 1
+    },
+    "payload": {
+      "type": "object",
+      "description": "事件业务数据，结构按 event_type 对应 x-event-payloads 中的 $defs。"
+    },
+    "actor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-classification": "personal"
+        },
+        "role": {
+          "type": "string"
+        }
+      }
+    },
+    "supersedes_event_id": {
+      "type": "string",
+      "description": "后继更正记录指向被更正的事件；被更正记录保留不删改。"
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "x-event-payloads": {
+    "THESIS_SUBMITTED": {
+      "$ref": "#/$defs/ThesisSubmitted"
+    },
+    "THESIS_REVISED": {
+      "$ref": "#/$defs/ThesisRevised"
+    },
+    "SOURCE_REGISTERED": {
+      "$ref": "#/$defs/SourceRegistered"
+    },
+    "SOURCE_CLEARED": {
+      "$ref": "#/$defs/SourceCleared"
+    },
+    "ACADEMIC_REVIEW_RECORDED": {
+      "$ref": "#/$defs/AcademicReviewRecorded"
+    },
+    "PROPOSAL_CREATED": {
+      "$ref": "#/$defs/ProposalCreated"
+    },
+    "PROTOTYPE_SUBMITTED": {
+      "$ref": "#/$defs/PrototypeSubmitted"
+    },
+    "COMPONENT_REGISTERED": {
+      "$ref": "#/$defs/ComponentRegistered"
+    },
+    "COMPONENT_DECLARED": {
+      "$ref": "#/$defs/ComponentDeclared"
+    },
+    "BUDGET_MILESTONE_SET": {
+      "$ref": "#/$defs/BudgetMilestoneSet"
+    },
+    "ACCESSIBILITY_ASSESSED": {
+      "$ref": "#/$defs/AccessibilityAssessed"
+    },
+    "SIMILARITY_FLAGGED": {
+      "$ref": "#/$defs/SimilarityFlagged"
+    },
+    "SPECIAL_REVIEW_CLEARED": {
+      "$ref": "#/$defs/SpecialReviewCleared"
+    },
+    "REVIEW_REQUESTED": {
+      "$ref": "#/$defs/ReviewRequested"
+    },
+    "REVIEW_DECIDED": {
+      "$ref": "#/$defs/ReviewDecided"
+    },
+    "CHANGE_REQUESTED": {
+      "$ref": "#/$defs/ChangeRequested"
+    },
+    "CHANGE_REVIEWED": {
+      "$ref": "#/$defs/ChangeReviewed"
+    },
+    "VERSION_RELEASED": {
+      "$ref": "#/$defs/VersionReleased"
+    },
+    "VERSION_WITHDRAWN": {
+      "$ref": "#/$defs/VersionWithdrawn"
+    },
+    "INTERACTION_CAPTURED": {
+      "$ref": "#/$defs/InteractionCaptured"
+    },
+    "INTERACTION_PURPOSE_VIOLATION_DETECTED": {
+      "$ref": "#/$defs/InteractionPurposeViolationDetected"
+    }
+  },
+  "$defs": {
+    "ProposalRef": {
+      "type": "object",
+      "required": ["proposal_id"],
+      "properties": {
+        "proposal_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ThesisSubmitted": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "title",
+        "proposition",
+        "core_questions",
+        "keywords"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposition": {
+          "type": "string",
+          "minLength": 1,
+          "description": "本方案独有的文化命题；没有命题的设备采购式方案不得进入评审。"
+        },
+        "core_questions": {
+          "type": "array"
+        },
+        "keywords": {
+          "type": "array"
+        },
+        "proposer": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "x-classification": "personal"
+            },
+            "organization": {
+              "type": "string",
+              "x-classification": "institutional"
+            },
+            "contact": {
+              "type": "string",
+              "x-classification": "personal"
+            }
+          }
+        }
+      }
+    },
+    "ThesisRevised": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "revision_of_event_id",
+        "proposition",
+        "change_note"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "revision_of_event_id": {
+          "type": "string",
+          "description": "被修订的 THESIS_SUBMITTED / THESIS_REVISED 事件。"
+        },
+        "proposition": {
+          "type": "string"
+        },
+        "change_note": {
+          "type": "string"
+        }
+      }
+    },
+    "SourceRegistered": {
+      "type": "object",
+      "required": ["proposal_id", "asset_kind", "title", "custodian", "content_hash"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "asset_kind": {
+          "type": "string",
+          "enum": [
+            "archaeological_survey",
+            "architectural_drawing",
+            "sound_recording",
+            "scholarly_material",
+            "other"
+          ],
+          "description": "考古测绘 / 建筑图档 / 声音采集 / 学术资料 / 其他。"
+        },
+        "title": {
+          "type": "string"
+        },
+        "custodian": {
+          "type": "string",
+          "x-classification": "institutional",
+          "description": "素材保管或收藏机构。"
+        },
+        "content_hash": {
+          "type": "string",
+          "description": "素材文件指纹，演示下钻据此核对所见即所核版本。"
+        },
+        "provenance_note": {
+          "type": "string"
+        },
+        "bib_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "SourceCleared": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "license_scope",
+        "ai_generated",
+        "human_reviewed",
+        "terms_summary"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "license_scope": {
+          "type": "string",
+          "enum": ["domestic", "overseas_tour", "site_superposition"],
+          "description": "许可使用范围：国内展出 / 海外巡展 / 原址叠加，须与实际巡展和叠加场景核对。"
+        },
+        "scope_territories": {
+          "type": "array"
+        },
+        "scope_venues": {
+          "type": "array"
+        },
+        "ai_generated": {
+          "type": "boolean",
+          "description": "素材是否含 AI 生成内容。"
+        },
+        "human_reviewed": {
+          "type": "boolean",
+          "description": "AI 生成内容、海外巡展与原址叠加必须经人工复核。"
+        },
+        "human_reviewer_ids": {
+          "type": "array",
+          "x-classification": "personal"
+        },
+        "clearance_valid_until": {
+          "type": "string"
+        },
+        "terms_summary": {
+          "type": "string",
+          "x-classification": "institutional"
+        }
+      }
+    },
+    "AcademicReviewRecorded": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "target_kind",
+        "target_ref",
+        "reviewer",
+        "verdict",
+        "claims_reviewed",
+        "notes"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "target_kind": {
+          "type": "string",
+          "enum": ["thesis", "asset", "prototype", "section"]
+        },
+        "target_ref": {
+          "type": "string",
+          "description": "asset_id / prototype_id / 章节标识。"
+        },
+        "reviewer": {
+          "type": "object",
+          "required": ["name", "organization", "expertise"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "x-classification": "personal"
+            },
+            "organization": {
+              "type": "string",
+              "x-classification": "personal"
+            },
+            "expertise": {
+              "type": "string"
+            }
+          }
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["pass", "pass_with_conditions", "reject"]
+        },
+        "conditions": {
+          "type": "array"
+        },
+        "claims_reviewed": {
+          "type": "array"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "ProposalCreated": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "thesis_event_id",
+        "title",
+        "involves_overseas_tour",
+        "involves_site_superposition",
+        "involves_ai_generated"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "thesis_event_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "involves_overseas_tour": {
+          "type": "boolean"
+        },
+        "involves_site_superposition": {
+          "type": "boolean"
+        },
+        "involves_ai_generated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrototypeSubmitted": {
+      "type": "object",
+      "required": ["proposal_id", "prototype_id", "demo_ref", "claims"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "prototype_id": {
+          "type": "string"
+        },
+        "demo_ref": {
+          "type": "string",
+          "description": "演示包定位（URI/制品号），评审人员由演示逐条下钻。"
+        },
+        "claims": {
+          "type": "array",
+          "description": "演示中每个史实/体验断言及其证据链；证据只能来自 research_asset，开放互动数据不得作为史实证据。"
+        }
+      }
+    },
+    "ComponentRegistered": {
+      "type": "object",
+      "required": [
+        "component_id",
+        "name",
+        "maturity",
+        "origin_ref",
+        "supplier"
+      ],
+      "properties": {
+        "component_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "maturity": {
+          "type": "string",
+          "enum": ["mature", "newly_developed"],
+          "description": "成熟组件允许复用，新组件须标注。"
+        },
+        "origin_ref": {
+          "type": "string",
+          "description": "组件来源（仓库/厂商/自研）。"
+        },
+        "origin_license": {
+          "type": "string"
+        },
+        "supplier": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "x-classification": "institutional"
+            },
+            "contact": {
+              "type": "string",
+              "x-classification": "personal"
+            }
+          }
+        }
+      }
+    },
+    "ComponentDeclared": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "component_id",
+        "reuse",
+        "modified",
+        "origin_disclosure"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "component_id": {
+          "type": "string"
+        },
+        "reuse": {
+          "type": "boolean",
+          "description": "是否复用既有成熟组件。"
+        },
+        "modified": {
+          "type": "boolean",
+          "description": "复用时是否做过修改；为 true 时 modifications 必填。"
+        },
+        "modifications": {
+          "type": "array",
+          "description": "对复用组件所做修改的逐项披露。"
+        },
+        "origin_disclosure": {
+          "type": "string",
+          "description": "来源披露说明，申报方对真实性负责。"
+        },
+        "supplier_quote": {
+          "type": "object",
+          "x-classification": "commercial",
+          "description": "报价等商业敏感信息。"
+        }
+      }
+    },
+    "BudgetMilestoneSet": {
+      "type": "object",
+      "required": ["proposal_id", "currency", "milestones", "total_amount"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "milestones": {
+          "type": "array"
+        },
+        "total_amount": {
+          "x-classification": "commercial"
+        }
+      }
+    },
+    "AccessibilityAssessed": {
+      "type": "object",
+      "required": ["proposal_id", "standard", "result", "findings"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "standard": {
+          "type": "string",
+          "description": "评估依据的无障碍标准。"
+        },
+        "result": {
+          "type": "string",
+          "enum": ["pass", "conditional", "fail"]
+        },
+        "findings": {
+          "type": "array"
+        },
+        "remediations": {
+          "type": "array"
+        },
+        "reassessment_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SimilarityFlagged": {
+      "type": "object",
+      "required": ["proposal_id", "threshold", "candidates", "note"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "candidates": {
+          "type": "array"
+        },
+        "note": {
+          "type": "string",
+          "description": "雷同仅为提示：系统不自动判定抄袭，必须由人工评审裁定。"
+        }
+      }
+    },
+    "SpecialReviewCleared": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "review_kind",
+        "human_reviewed",
+        "human_reviewer",
+        "usage_scope",
+        "verdict"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "review_kind": {
+          "type": "string",
+          "enum": ["overseas_tour", "site_superposition", "ai_generated_content"]
+        },
+        "human_reviewed": {
+          "type": "boolean"
+        },
+        "human_reviewer": {
+          "type": "object",
+          "x-classification": "personal"
+        },
+        "usage_scope": {
+          "type": "object",
+          "description": "核准的使用范围（地区/场地/期限/限制）。"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["cleared", "cleared_with_conditions", "rejected"]
+        },
+        "conditions": {
+          "type": "array"
+        }
+      }
+    },
+    "ReviewRequested": {
+      "type": "object",
+      "required": ["proposal_id", "gate", "reason"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "gate": {
+          "type": "string",
+          "enum": [
+            "thesis",
+            "source",
+            "academic",
+            "prototype",
+            "components",
+            "budget",
+            "accessibility",
+            "similarity",
+            "special",
+            "approval"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "ReviewDecided": {
+      "type": "object",
+      "required": ["proposal_id", "gate", "verdict", "reviewer_ids", "note"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "gate": {
+          "type": "string",
+          "enum": [
+            "thesis",
+            "source",
+            "academic",
+            "prototype",
+            "components",
+            "budget",
+            "accessibility",
+            "similarity",
+            "special",
+            "approval"
+          ]
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["approved", "rejected", "conditional"]
+        },
+        "reviewer_ids": {
+          "type": "array",
+          "x-classification": "personal"
+        },
+        "conditions": {
+          "type": "array"
+        },
+        "adjudicates_event_id": {
+          "type": "string",
+          "description": "人工裁定所针对的 SIMILARITY_FLAGGED 事件。"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "ChangeRequested": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "change_class",
+        "affected_sections",
+        "reason",
+        "details"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "change_class": {
+          "type": "string",
+          "enum": [
+            "device_replacement",
+            "schedule_delay",
+            "budget_adjustment",
+            "component_swap",
+            "venue_change",
+            "content_change",
+            "aigc_addition"
+          ],
+          "description": "设备替换 / 延期 / 预算调整 / 组件替换 / 场地变化 / 内容修改 / 新增AI生成内容。"
+        },
+        "affected_sections": {
+          "type": "array",
+          "description": "受影响的展项部分；只有这些部分需要重审。"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    },
+    "ChangeReviewed": {
+      "type": "object",
+      "required": [
+        "change_request_id",
+        "proposal_id",
+        "decision",
+        "reopened_gates",
+        "carried_reviews",
+        "reviewer_ids",
+        "note"
+      ],
+      "properties": {
+        "change_request_id": {
+          "type": "string"
+        },
+        "proposal_id": {
+          "type": "string"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["approved", "rejected"]
+        },
+        "reopened_gates": {
+          "type": "array",
+          "description": "仅重开受影响的门禁；其余门禁保持原结论。"
+        },
+        "carried_reviews": {
+          "type": "array",
+          "description": "未受影响部分的既有学术意见逐条显式沿用，绝不悬空：[{review_event_id, applies:true, note}]。"
+        },
+        "conditions": {
+          "type": "array"
+        },
+        "reviewer_ids": {
+          "type": "array",
+          "x-classification": "personal"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "VersionReleased": {
+      "type": "object",
+      "required": ["proposal_id", "version_tag", "gate_snapshot", "release_note"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "version_tag": {
+          "type": "string"
+        },
+        "gate_snapshot": {
+          "type": "object",
+          "description": "发布时刻各门禁结论与所依据事件的快照。"
+        },
+        "release_note": {
+          "type": "string"
+        }
+      }
+    },
+    "VersionWithdrawn": {
+      "type": "object",
+      "required": ["proposal_id", "version_tag", "reason"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "version_tag": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "InteractionCaptured": {
+      "type": "object",
+      "required": [
+        "proposal_id",
+        "version_tag",
+        "anonymous",
+        "kind",
+        "usage_purpose"
+      ],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "version_tag": {
+          "type": "string"
+        },
+        "anonymous": {
+          "const": true,
+          "description": "开放后的互动记录必须匿名，不得采集可识别个人信息。"
+        },
+        "pseudonymous_session_ref": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["dwell", "path", "choice", "rating", "anonymous_feedback"]
+        },
+        "usage_purpose": {
+          "const": "experience_improvement_only",
+          "description": "互动数据只能用于改进体验，不得被写成新的历史事实。"
+        },
+        "payload_summary": {
+          "type": "string"
+        }
+      }
+    },
+    "InteractionPurposeViolationDetected": {
+      "type": "object",
+      "required": ["proposal_id", "attempted_use", "description"],
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "attempted_use": {
+          "type": "string",
+          "enum": ["historical_claim_evidence", "re_identification", "other"]
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
 }

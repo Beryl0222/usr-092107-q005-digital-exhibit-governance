@@ -7,3 +7,7 @@ __pycache__/
 *.py[cod]
 dist/
 coverage/
+
+# 运行期事件日志（样例 data/sample.json 仍纳入版本管理）
+data/*.jsonl
+*.jsonl.local

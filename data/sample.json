@@ -2,8 +2,27 @@
   "event_id": "sample-005-001",
   "event_type": "THESIS_SUBMITTED",
   "aggregate_type": "curatorial_thesis",
-  "aggregate_id": "digital_exhibit_governance-001",
+  "aggregate_id": "thesis-001",
   "occurred_at": "2026-09-20T18:00:00+08:00",
   "version": 1,
-  "summary": "登记数字文化展项立项台的首条领域记录"
+  "summary": "提交中轴线数字展项首版策展命题：晨钟暮鼓如何组织古代城市的时间生活",
+  "actor": {
+    "id": "u-chen",
+    "role": "curator"
+  },
+  "payload": {
+    "proposal_id": "PROP-AXIS-2026-014",
+    "title": "中轴时辰",
+    "proposition": "以钟鼓楼的报时制度为线索，体验中轴线如何以时间而非仅空间组织城市生活；设备与技术服务于这一命题。",
+    "core_questions": [
+      "报时信号如何在不同社会阶层间被接收？",
+      "晨钟暮鼓的声音景观在当代原址如何叠加呈现？"
+    ],
+    "keywords": ["中轴线", "钟鼓楼", "时间制度", "声音景观"],
+    "proposer": {
+      "name": "陈某",
+      "organization": "某市属博物馆数字展陈部",
+      "contact": "chen@example.org"
+    }
+  }
 }
