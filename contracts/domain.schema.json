@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "数字文化展项立项台领域事件",
+  "description": "策展命题、研究素材许可、交互原型、供应商组件、预算里程碑、无障碍评估、学术审读、使用范围核对、变更重审与上线版本共用同一条只追加事件链。事件一经接收，event_id、occurred_at、version 不得原地改写；更正只能追加后继记录（CORRECTION_RECORDED）。",
   "type": "object",
   "required": [
     "event_id",
@@ -12,18 +13,29 @@
     "summary"
   ],
   "properties": {
-    "event_id": {
-      "type": "string",
-      "minLength": 1
-    },
+    "event_id": { "type": "string", "minLength": 1 },
     "event_type": {
       "type": "string",
       "enum": [
         "THESIS_SUBMITTED",
+        "THESIS_WITHDRAWN",
+        "PROPOSAL_CREATED",
+        "ASSET_REGISTERED",
         "SOURCE_CLEARED",
+        "PROTOTYPE_SUBMITTED",
+        "COMPONENT_DECLARED",
+        "BUDGET_MILESTONE_SET",
+        "ACCESSIBILITY_REVIEWED",
+        "SCHOLAR_REVIEW_RECORDED",
+        "CHANNEL_SCOPE_CHECKED",
         "SIMILARITY_FLAGGED",
+        "SIMILARITY_ADJUDICATED",
+        "CHANGE_REQUESTED",
         "CHANGE_REVIEWED",
-        "VERSION_RELEASED"
+        "STAGE_APPROVED",
+        "VERSION_RELEASED",
+        "VISITOR_SIGNAL_RECORDED",
+        "CORRECTION_RECORDED"
       ]
     },
     "aggregate_type": {
@@ -32,25 +44,572 @@
         "curatorial_thesis",
         "research_asset",
         "experience_proposal",
-        "approval_decision"
+        "prototype",
+        "supplier_component",
+        "budget",
+        "accessibility_review",
+        "scholarly_review",
+        "channel_clearance",
+        "similarity_report",
+        "change_request",
+        "approval_decision",
+        "release",
+        "visitor_signal"
       ]
     },
-    "aggregate_id": {
-      "type": "string",
-      "minLength": 1
+    "aggregate_id": { "type": "string", "minLength": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "version": { "type": "integer", "minimum": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "payload": { "type": "object" },
+    "actor": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "role": {
+          "type": "string",
+          "enum": ["applicant", "reviewer", "board", "system", "anonymous"]
+        },
+        "display_name": { "type": "string" },
+        "org": { "type": "string" }
+      },
+      "required": ["id", "role"]
     },
-    "occurred_at": {
+    "predecessor_event_id": {
       "type": "string",
-      "format": "date-time"
-    },
-    "version": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "summary": {
-      "type": "string",
-      "minLength": 1
+      "description": "后继更正记录指向被更正的原事件；原事件保留不变。"
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "$defs": {
+    "assetCitation": {
+      "type": "object",
+      "description": "演示片段到研究素材的逐处出处：考古测绘、建筑图档、声音采集等。",
+      "required": ["asset_id", "locator", "usage"],
+      "properties": {
+        "asset_id": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "usage": { "type": "string", "minLength": 1 },
+        "interpretation": { "type": "string" },
+        "certainty": { "enum": ["measured", "documented", "inferred"] }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "description": "素材许可或使用范围：地域、渠道、用途与到期时间。",
+      "properties": {
+        "territories": { "type": "array", "items": { "type": "string" } },
+        "channels": {
+          "type": "array",
+          "items": {
+            "enum": ["onsite", "overseas_tour", "on_site_overlay", "online", "ai_generated"]
+          }
+        },
+        "purposes": { "type": "array", "items": { "type": "string" } },
+        "expires_at": { "type": ["string", "null"], "format": "date-time" },
+        "restrictions": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event_type": { "const": "THESIS_SUBMITTED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "curatorial_thesis" },
+          "payload": {
+            "type": "object",
+            "required": ["title", "cultural_claim"],
+            "properties": {
+              "title": { "type": "string", "minLength": 1 },
+              "cultural_claim": { "type": "string", "minLength": 1, "description": "本方案独有的文化命题，立项评审的首要对象。" },
+              "research_questions": { "type": "array", "items": { "type": "string" } },
+              "keywords": { "type": "array", "items": { "type": "string" } },
+              "submitter_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "THESIS_WITHDRAWN" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "curatorial_thesis" },
+          "payload": { "type": "object", "required": ["reason"] }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "PROPOSAL_CREATED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "experience_proposal" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "thesis_id", "title", "channels"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "thesis_id": { "type": "string", "minLength": 1 },
+              "title": { "type": "string", "minLength": 1 },
+              "channels": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": ["onsite", "overseas_tour", "on_site_overlay", "online", "ai_generated"]
+                }
+              },
+              "venues": { "type": "array", "items": { "type": "string" } },
+              "lead_org": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "ASSET_REGISTERED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "research_asset" },
+          "payload": {
+            "type": "object",
+            "required": ["asset_id", "kind", "title", "citation"],
+            "properties": {
+              "asset_id": { "type": "string", "minLength": 1 },
+              "kind": {
+                "enum": ["archaeological_survey", "architectural_archive", "sound_recording", "field_notes", "other"]
+              },
+              "title": { "type": "string", "minLength": 1 },
+              "citation": { "type": "string", "minLength": 1 },
+              "holding_institution": { "type": "string" },
+              "custodian_contact": { "type": "string" },
+              "provenance_note": { "type": "string" },
+              "acquired_at": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "SOURCE_CLEARED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "research_asset" },
+          "payload": {
+            "type": "object",
+            "required": ["asset_id", "scope", "cleared"],
+            "properties": {
+              "asset_id": { "type": "string", "minLength": 1 },
+              "proposal_id": { "type": "string" },
+              "scope": { "$ref": "#/$defs/scope" },
+              "cleared": { "type": "boolean" },
+              "license_document_ref": { "type": "string" },
+              "limitations": { "type": "array", "items": { "type": "string" } },
+              "reviewer_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "PROTOTYPE_SUBMITTED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "prototype" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "prototype_version", "demo_scenes"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "prototype_version": { "type": "integer", "minimum": 1 },
+              "artifact_ref": { "type": "string" },
+              "demo_scenes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["scene_id", "title", "claim", "asset_citations"],
+                  "properties": {
+                    "scene_id": { "type": "string", "minLength": 1 },
+                    "title": { "type": "string", "minLength": 1 },
+                    "claim": { "type": "string", "minLength": 1, "description": "该演示片段所表达的论证，可下钻到素材出处。" },
+                    "asset_citations": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": { "$ref": "#/$defs/assetCitation" }
+                    },
+                    "ai_assisted": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "COMPONENT_DECLARED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "supplier_component" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "name", "is_reuse"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "component_id": { "type": "string" },
+              "name": { "type": "string", "minLength": 1 },
+              "supplier_id": { "type": "string" },
+              "is_reuse": { "type": "boolean" },
+              "origin": {
+                "type": "object",
+                "required": ["source_type"],
+                "properties": {
+                  "source_type": { "enum": ["mature_product", "internal_prior", "open_source", "market_new"] },
+                  "upstream_name": { "type": "string" },
+                  "upstream_version": { "type": "string" },
+                  "license": { "type": "string" }
+                }
+              },
+              "modifications": { "type": "string", "description": "成熟组件复用时必须披露所做修改；无修改也须显式声明。" },
+              "qualification_evidence_ref": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "BUDGET_MILESTONE_SET" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "budget" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "currency", "total_amount", "milestones"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "currency": { "type": "string", "minLength": 1 },
+              "total_amount": { "type": "number" },
+              "milestones": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["milestone_id", "name", "amount", "due_date"],
+                  "properties": {
+                    "milestone_id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "amount": { "type": "number" },
+                    "due_date": { "type": "string" },
+                    "deliverable": { "type": "string" },
+                    "stage_gate": {
+                      "enum": ["acceptance", "pre_release", "go_live", "none"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "ACCESSIBILITY_REVIEWED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "accessibility_review" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "result", "scope_sections"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "review_id": { "type": "string" },
+              "standard": { "type": "string" },
+              "result": { "enum": ["pass", "conditional", "fail"] },
+              "scope_sections": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["area", "finding"],
+                  "properties": {
+                    "area": { "type": "string" },
+                    "severity": { "enum": ["low", "medium", "high"] },
+                    "finding": { "type": "string" }
+                  }
+                }
+              },
+              "conditions": { "type": "array", "items": { "type": "string" } },
+              "reviewer_org": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "SCHOLAR_REVIEW_RECORDED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "scholarly_review" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "verdict", "opinion", "scope_sections"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "review_id": { "type": "string", "minLength": 1 },
+              "verdict": { "enum": ["endorse", "revise", "reject"] },
+              "opinion": { "type": "string", "minLength": 1 },
+              "scope_sections": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "reviewed_prototype_version": { "type": "integer" },
+              "conditions": { "type": "array", "items": { "type": "string" } },
+              "reviewer_id": { "type": "string" },
+              "reviewer_display_name": { "type": "string" },
+              "reviewer_org": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "CHANNEL_SCOPE_CHECKED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "channel_clearance" },
+          "payload": {
+            "type": "object",
+            "description": "海外巡展、原址叠加、AI 生成内容分别核对使用范围；AI 与原址叠加须留人工复核。",
+            "required": ["proposal_id", "channel", "status"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "channel": { "enum": ["overseas_tour", "on_site_overlay", "ai_generated", "onsite", "online"] },
+              "status": { "enum": ["cleared", "restricted", "rejected", "pending_human_review"] },
+              "scope": { "$ref": "#/$defs/scope" },
+              "human_reviewed": { "type": "boolean" },
+              "human_reviewer_id": { "type": "string" },
+              "review_note": { "type": "string" },
+              "ai_output_disclosure": {
+                "type": "object",
+                "properties": {
+                  "model_source": { "type": "string" },
+                  "training_data_note": { "type": "string" },
+                  "human_verified_sections": { "type": "array", "items": { "type": "string" } }
+                }
+              },
+              "conditions": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "SIMILARITY_FLAGGED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "similarity_report" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "compared_proposal_ids", "score", "advisory_only"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "compared_proposal_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "matched_segments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["segment", "score"],
+                  "properties": {
+                    "segment": { "type": "string" },
+                    "score": { "type": "number" }
+                  }
+                }
+              },
+              "advisory_only": {
+                "const": true,
+                "description": "系统只作雷同提示，不自动判定抄袭；是否成立须人工裁定。"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "SIMILARITY_ADJUDICATED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "similarity_report" },
+          "payload": {
+            "type": "object",
+            "required": ["report_id", "disposition", "rationale"],
+            "properties": {
+              "report_id": { "type": "string", "minLength": 1 },
+              "proposal_id": { "type": "string" },
+              "disposition": { "enum": ["distinct", "needs_revision", "plagiarism_concern_escalated"] },
+              "rationale": { "type": "string", "minLength": 1 },
+              "adjudicator_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "CHANGE_REQUESTED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "change_request" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "change_kind", "affected_sections", "justification"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "change_id": { "type": "string", "minLength": 1 },
+              "change_kind": {
+                "enum": [
+                  "equipment_replacement",
+                  "schedule_delay",
+                  "content_revision",
+                  "venue_change",
+                  "overseas_extension",
+                  "ai_scope_extension",
+                  "budget_adjustment"
+                ]
+              },
+              "affected_sections": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["section_type", "summary"],
+                  "properties": {
+                    "section_type": {
+                      "enum": ["prototype", "component", "budget", "accessibility", "scholarly_content", "channel_scope", "venue", "schedule"]
+                    },
+                    "ref": { "type": "string" },
+                    "summary": { "type": "string" }
+                  }
+                }
+              },
+              "justification": { "type": "string", "minLength": 1 },
+              "requested_by": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "CHANGE_REVIEWED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "approval_decision" },
+          "payload": {
+            "type": "object",
+            "required": ["change_id", "proposal_id", "decision", "rereview_scope", "carried_review_ids"],
+            "properties": {
+              "change_id": { "type": "string", "minLength": 1 },
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "decision": { "enum": ["approved", "approved_with_conditions", "rejected"] },
+              "rereview_scope": {
+                "type": "array",
+                "items": {
+                  "enum": ["prototype", "component", "budget", "accessibility", "scholarly_content", "channel_scope", "venue", "schedule"]
+                },
+                "description": "受影响、必须重审的部分；范围之外的既有学术意见自动承继。"
+              },
+              "carried_review_ids": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "明示继续有效的既有审读/评估意见，不得悬空。"
+              },
+              "invalidated_review_ids": { "type": "array", "items": { "type": "string" } },
+              "conditions": { "type": "array", "items": { "type": "string" } },
+              "note": { "type": "string" },
+              "reviewer_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "STAGE_APPROVED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "approval_decision" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "stage", "decision"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "stage": { "enum": ["acceptance", "pre_release", "go_live"] },
+              "decision": { "enum": ["approved", "rejected"] },
+              "conditions": { "type": "array", "items": { "type": "string" } },
+              "board_id": { "type": "string" },
+              "note": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "VERSION_RELEASED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "release" },
+          "payload": {
+            "type": "object",
+            "required": ["proposal_id", "version", "artifact_ref"],
+            "properties": {
+              "proposal_id": { "type": "string", "minLength": 1 },
+              "release_id": { "type": "string", "minLength": 1 },
+              "version": { "type": "string", "minLength": 1 },
+              "artifact_ref": { "type": "string", "minLength": 1 },
+              "based_on_change_ids": { "type": "array", "items": { "type": "string" } },
+              "prototype_version": { "type": "integer" },
+              "release_notes": { "type": "string" },
+              "approver_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "VISITOR_SIGNAL_RECORDED" } } },
+      "then": {
+        "properties": {
+          "aggregate_type": { "const": "visitor_signal" },
+          "payload": {
+            "type": "object",
+            "required": ["release_id", "signal_kind", "permitted_use", "anonymous"],
+            "properties": {
+              "release_id": { "type": "string", "minLength": 1 },
+              "signal_kind": {
+                "enum": ["interaction_path", "dwell_time", "rating", "free_text", "accessibility_usage"]
+              },
+              "permitted_use": {
+                "const": "experience_improvement",
+                "description": "开放后的匿名互动只能用于改进体验，不得被写成新的历史事实或学术证据。"
+              },
+              "anonymous": { "const": true },
+              "summary_text": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "CORRECTION_RECORDED" } } },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["predecessor_event_id", "reason"],
+            "properties": {
+              "predecessor_event_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "correction": { "type": "object" }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

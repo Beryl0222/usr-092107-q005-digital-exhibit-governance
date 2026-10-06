@@ -1,10 +1,12 @@
 {
   "name": "digital-exhibit-governance",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "领域事件基础校验",
+  "description": "中轴线数字展项立项与变更平台：策展命题、素材许可、原型出处、组件披露、预算里程碑、无障碍与学术审读、渠道专项核对、变更局部重审与上线版本的同链决策",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "demo": "node src/demo.js",
+    "start": "node src/server.js"
   }
 }

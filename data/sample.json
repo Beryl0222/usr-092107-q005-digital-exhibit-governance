@@ -2,8 +2,24 @@
   "event_id": "sample-005-001",
   "event_type": "THESIS_SUBMITTED",
   "aggregate_type": "curatorial_thesis",
-  "aggregate_id": "digital_exhibit_governance-001",
+  "aggregate_id": "thesis-sample-bell-drum",
   "occurred_at": "2026-09-20T18:00:00+08:00",
   "version": 1,
-  "summary": "登记数字文化展项立项台的首条领域记录"
+  "summary": "登记数字文化展项立项台的首条领域记录：晨钟暮鼓策展命题",
+  "payload": {
+    "title": "晨钟暮鼓：中轴线的时间秩序",
+    "cultural_claim": "钟楼与鼓楼并非两座孤立建筑，而是一套从元大都到清末持续校准全城作息的时间制度；数字展项复原的是声音与城市场景共同构成的秩序。",
+    "research_questions": [
+      "钟鼓声的实际声响是否可由测音资料复原？",
+      "不同朝代报时仪式的空间动线如何变化？"
+    ],
+    "keywords": ["中轴线", "钟楼", "鼓楼", "报时制度", "声音景观"],
+    "submitter_id": "u-guohang"
+  },
+  "actor": {
+    "id": "u-guohang",
+    "role": "applicant",
+    "display_name": "郭航",
+    "org": "中轴数字展陈中心"
+  }
 }
